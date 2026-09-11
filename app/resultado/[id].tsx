@@ -1,11 +1,14 @@
+import { File, Paths } from 'expo-file-system';
 import { router, useLocalSearchParams } from 'expo-router';
+import * as Sharing from 'expo-sharing';
 import { useEffect, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RiskStrip } from '../../src/components/RiskStrip';
 import { StatCard } from '../../src/components/StatCard';
 import { COLORS, FONTS, THEME } from '../../src/core/constants';
+import { csvFileName, toCsv } from '../../src/core/csv';
 import { recommendation, topAnomalies } from '../../src/core/stats';
 import type { Reading, RiskLevel, Session } from '../../src/core/types';
 import { useSessions } from '../../src/hooks/useSessions';
@@ -15,6 +18,7 @@ export default function Resultado() {
   const { get } = useSessions();
   const [sessao, setSessao] = useState<Session | null>(null);
   const [carregando, setCarregando] = useState(true);
+  const [exportando, setExportando] = useState(false);
 
   useEffect(() => {
     let montado = true;
@@ -54,6 +58,31 @@ export default function Resultado() {
   const anomalias = topAnomalies(readings);
   const niveis = readings.map((r) => r.level);
   const meio = stats.totalDistance / 2;
+
+  const exportar = async () => {
+    if (exportando) return;
+    setExportando(true);
+    try {
+      // Cache: o arquivo só precisa viver até a folha de compartilhamento
+      const arquivo = new File(Paths.cache, csvFileName(sessao));
+      arquivo.create({ overwrite: true });
+      arquivo.write(toCsv(readings));
+
+      if (!(await Sharing.isAvailableAsync())) {
+        Alert.alert('Sem compartilhamento', 'Este aparelho não oferece a folha de compartilhamento.');
+        return;
+      }
+      await Sharing.shareAsync(arquivo.uri, {
+        mimeType: 'text/csv',
+        dialogTitle: 'Exportar leituras',
+        UTI: 'public.comma-separated-values-text',
+      });
+    } catch (erro) {
+      Alert.alert('Falha ao exportar', erro instanceof Error ? erro.message : 'Erro desconhecido.');
+    } finally {
+      setExportando(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.tela}>
@@ -134,6 +163,17 @@ export default function Resultado() {
           <Text style={styles.secao}>RECOMENDAÇÃO</Text>
           <Text style={styles.recomendacao}>{recommendation(stats)}</Text>
         </View>
+
+        <Pressable
+          onPress={() => void exportar()}
+          disabled={exportando}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.exportar, pressed && styles.exportarPressionado]}
+        >
+          <Text style={styles.exportarTexto}>
+            {exportando ? 'Preparando...' : 'Exportar CSV'}
+          </Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -336,6 +376,23 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.sans,
     fontSize: 14,
     lineHeight: 22,
+    color: THEME.fg,
+  },
+  exportar: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    paddingVertical: 14,
+    marginTop: 2,
+  },
+  exportarPressionado: {
+    opacity: 0.7,
+  },
+  exportarTexto: {
+    fontFamily: FONTS.sansMedium,
+    fontSize: 15,
     color: THEME.fg,
   },
 });
