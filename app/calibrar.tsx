@@ -1,4 +1,3 @@
-import type { Href } from 'expo-router';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -72,9 +71,10 @@ export default function Calibrar() {
   const iniciarVarredura = () => {
     if (baseline === null || !passadaValida) return;
     const rotulo = nome.trim() === '' ? 'Sem nome' : nome.trim();
-    // A rota /varredura nasce na T6. O cast sai quando o arquivo existir.
-    const destino = `/varredura?nome=${encodeURIComponent(rotulo)}&passada=${passada}&baseline=${baseline}` as Href;
-    router.push(destino);
+    router.push({
+      pathname: '/varredura',
+      params: { nome: rotulo, passada: String(passada), baseline: String(baseline) },
+    });
   };
 
   return (

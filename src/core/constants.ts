@@ -22,6 +22,17 @@ export const COLORS: Record<RiskLevel, string> = {
   critical: '#dc2626',
 };
 
+// Blocos da faixa de risco. Limita o desenho a um número fixo de views,
+// em vez de uma por leitura.
+export const STRIP_SEGMENTS = 120;
+
+// Texto legível sobre cada cor de risco usada como fundo de tela
+export const TEXT_ON_RISK: Record<RiskLevel, string> = {
+  safe: '#ffffff',
+  warning: '#000000',
+  critical: '#ffffff',
+};
+
 // Identidade visual da OWL, espelhada de owl-landing-page/src/app/globals.css
 export const THEME = {
   bg: '#000000',

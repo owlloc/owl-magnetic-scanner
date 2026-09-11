@@ -1,4 +1,5 @@
-import type { Reading, SessionStats } from './types';
+import { STRIP_SEGMENTS } from './constants';
+import type { Reading, RiskLevel, SessionStats } from './types';
 
 const EMPTY_STATS: SessionStats = {
   min: 0,
@@ -33,16 +34,44 @@ export function computeStats(readings: Reading[]): SessionStats {
     else critical++;
   }
 
-  const total = readings.length;
+  const totalLeituras = readings.length;
   return {
     min,
     max,
-    mean: sum / total,
+    mean: sum / totalLeituras,
     // passos e distância são acumulados, então bastam os da última leitura
     totalSteps: last.steps,
     totalDistance: last.distance,
-    pctSafe: safe / total,
-    pctWarning: warning / total,
-    pctCritical: critical / total,
+    pctSafe: safe / totalLeituras,
+    pctWarning: warning / totalLeituras,
+    pctCritical: critical / totalLeituras,
   };
+}
+
+const SEVERIDADE: Record<RiskLevel, number> = { safe: 0, warning: 1, critical: 2 };
+
+// Agrupa as leituras em blocos de largura fixa para a faixa colorida, cada
+// bloco ficando com o pior nível que caiu nele. Sem isso a faixa viraria
+// milhares de views numa varredura de poucos minutos. É o pior nível que
+// importa: uma zona crítica curta não pode desaparecer numa média.
+export function summarizeStrip(
+  levels: RiskLevel[],
+  segments: number = STRIP_SEGMENTS
+): RiskLevel[] {
+  if (levels.length === 0) return [];
+  const total = Math.min(segments, levels.length);
+  const blocos: RiskLevel[] = [];
+
+  for (let i = 0; i < total; i++) {
+    const inicio = Math.floor((i * levels.length) / total);
+    const fim = Math.max(inicio + 1, Math.floor(((i + 1) * levels.length) / total));
+    let pior: RiskLevel = 'safe';
+    for (let j = inicio; j < fim; j++) {
+      const nivel = levels[j];
+      if (nivel !== undefined && SEVERIDADE[nivel] > SEVERIDADE[pior]) pior = nivel;
+    }
+    blocos.push(pior);
+  }
+
+  return blocos;
 }
