@@ -6,10 +6,12 @@ export const SMOOTHING_WINDOW = 5;
 export const CALIBRATION_MS = 3000;
 export const WARNING_THRESHOLD = 0.15;
 export const CRITICAL_THRESHOLD = 0.4;
-// Aferido em campo com 20 passos lentos: 1.18 g contou 8, 1.12 contou 15,
-// 1.08 contou 22 e 1.04 disparou para 43. Andando devagar o impacto do pé
-// mal passa de 1.10 g, então o 1.18 do spec perdia a maioria dos passos.
-export const STEP_THRESHOLD = 1.08; // em g, módulo da aceleração
+// Aferido em campo. Com 20 passos lentos e deliberados: 1.18 g contou 8,
+// 1.12 contou 15, 1.08 contou 22 e 1.04 disparou para 43. Mas no uso real
+// da varredura, com o aparelho na mão e sendo movido, 1.08 contou passos
+// demais: o próprio movimento do braço cruza o limiar. Voltou para 1.18,
+// que erra para menos no passo lento mas não inventa passo parado.
+export const STEP_THRESHOLD = 1.18; // em g, módulo da aceleração
 export const STEP_REFRACTORY_MS = 280; // evita contagem dupla no mesmo impacto
 export const DEFAULT_STRIDE_M = 0.7;
 // Faixa plausível do campo terrestre medido por celular. Fora disso, ou há
