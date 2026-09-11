@@ -1,25 +1,43 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RiskStrip } from '../../src/components/RiskStrip';
 import { StatCard } from '../../src/components/StatCard';
 import { COLORS, FONTS, THEME } from '../../src/core/constants';
-import { recuperarSessao } from '../../src/core/sessionHandoff';
 import { recommendation, topAnomalies } from '../../src/core/stats';
-import type { Reading, RiskLevel } from '../../src/core/types';
+import type { Reading, RiskLevel, Session } from '../../src/core/types';
+import { useSessions } from '../../src/hooks/useSessions';
 
 export default function Resultado() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const sessao = recuperarSessao(id);
+  const { get } = useSessions();
+  const [sessao, setSessao] = useState<Session | null>(null);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    let montado = true;
+    void get(id).then((encontrada) => {
+      if (!montado) return;
+      setSessao(encontrada);
+      setCarregando(false);
+    });
+    return () => {
+      montado = false;
+    };
+  }, [id, get]);
+
+  if (carregando) {
+    return <SafeAreaView style={styles.tela} />;
+  }
 
   if (sessao === null) {
     return (
       <SafeAreaView style={[styles.tela, styles.telaVazia]}>
-        <Text style={styles.vazioTitulo}>Sessão não encontrada</Text>
+        <Text style={styles.vazioTitulo}>Varredura não encontrada</Text>
         <Text style={styles.vazioTexto}>
-          Esta varredura não está mais na memória do app. A persistência entre aberturas chega na
-          próxima etapa.
+          Esta varredura não está salva neste aparelho. Talvez tenha sido apagada.
         </Text>
         <Pressable
           onPress={() => router.replace('/')}

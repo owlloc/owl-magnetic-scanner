@@ -1,33 +1,28 @@
-// Tela de teste das T3 e T4: valida magnetômetro e pedômetro ao vivo no
-// aparelho. É temporária — a Home definitiva (lista de sessões) chega na T8.
-import { router } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
+import { Alert, FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { DEFAULT_STRIDE_M, FONTS, THEME } from '../src/core/constants';
-import { useMagnetometer } from '../src/hooks/useMagnetometer';
-import { usePedometer } from '../src/hooks/usePedometer';
-
-// Passada fixa nesta tela de teste; quem edita de verdade é a calibração.
-const PASSADA_TESTE = DEFAULT_STRIDE_M;
+import { COLORS, FONTS, THEME } from '../src/core/constants';
+import type { RiskLevel, Session } from '../src/core/types';
+import { useSessions } from '../src/hooks/useSessions';
 
 export default function Home() {
-  const mag = useMagnetometer();
-  const passos = usePedometer(PASSADA_TESTE);
+  const { sessions, isLoading, list, remove } = useSessions();
 
-  const lendo = mag.isRunning || passos.isRunning;
+  // A lista precisa recarregar ao voltar do resultado, senão a varredura
+  // recém-finalizada não aparece.
+  useFocusEffect(
+    useCallback(() => {
+      void list();
+    }, [list])
+  );
 
-  const iniciar = () => {
-    mag.start();
-    passos.start();
-  };
-  const parar = () => {
-    mag.stop();
-    passos.stop();
-  };
-  const zerar = () => {
-    mag.reset();
-    passos.reset();
+  const confirmarExclusao = (sessao: Session) => {
+    Alert.alert('Apagar varredura', `"${sessao.name}" será removida deste aparelho.`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Apagar', style: 'destructive', onPress: () => void remove(sessao.id) },
+    ]);
   };
 
   return (
@@ -40,72 +35,95 @@ export default function Home() {
           accessibilityLabel="OWL"
         />
         <Text style={styles.etiqueta}>MAGSCAN</Text>
-        <View style={styles.espacador} />
-        <Pressable onPress={() => router.push('/calibrar')} accessibilityRole="link">
-          <Text style={styles.atalho}>Calibrar →</Text>
-        </Pressable>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.conteudo}
+      <FlatList
+        data={sessions}
+        keyExtractor={(s) => s.id}
+        contentContainerStyle={styles.lista}
         showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.bloco}>
-          <Text style={styles.secao}>MAGNETÔMETRO</Text>
-          {mag.isAvailable === false ? (
-            <Text style={styles.indisponivel}>
-              Este aparelho não tem magnetômetro. O app não consegue medir campo magnético aqui.
-            </Text>
-          ) : (
-            <>
-              <Medida
-                valor={mag.smoothed === null ? '--' : formatar(mag.smoothed, 1)}
-                unidade="µT"
-              />
-              <View style={styles.cartao}>
-                <Linha rotulo="x" valor={mag.raw === null ? '--' : formatar(mag.raw.x, 2)} />
-                <Linha rotulo="y" valor={mag.raw === null ? '--' : formatar(mag.raw.y, 2)} />
-                <Linha rotulo="z" valor={mag.raw === null ? '--' : formatar(mag.raw.z, 2)} />
-                <Linha rotulo="amostras" valor={String(mag.samples.length)} />
-              </View>
-            </>
-          )}
-        </View>
-
-        <View style={styles.bloco}>
-          <Text style={styles.secao}>PEDÔMETRO</Text>
-          {passos.isAvailable === false ? (
-            <Text style={styles.indisponivel}>
-              Este aparelho não tem acelerômetro. Não dá para contar passos aqui.
-            </Text>
-          ) : (
-            <>
-              <Medida valor={String(passos.steps)} unidade="passos" />
-              <View style={styles.cartao}>
-                <Linha rotulo="distância" valor={`${formatar(passos.distance, 2)} m`} />
-                <Linha rotulo="passada" valor={`${formatar(PASSADA_TESTE, 2)} m`} />
-                <Linha rotulo="estado" valor={lendo ? 'lendo' : 'parado'} />
-              </View>
-            </>
-          )}
-        </View>
-
-        <Text style={styles.dica}>
-          Encoste o aparelho numa tesoura, numa maçaneta ou na lateral de um armário de aço e anote
-          os valores em µT.
-        </Text>
-      </ScrollView>
+        ListHeaderComponent={<Text style={styles.titulo}>Varreduras</Text>}
+        ListEmptyComponent={
+          isLoading ? null : (
+            <View style={styles.vazio}>
+              <Text style={styles.vazioTitulo}>Nenhuma varredura ainda</Text>
+              <Text style={styles.vazioTexto}>
+                Calibre num ponto limpo e caminhe pelo galpão para mapear onde há concentração
+                metálica.
+              </Text>
+            </View>
+          )
+        }
+        renderItem={({ item }) => (
+          <ItemSessao
+            sessao={item}
+            onAbrir={() => router.push({ pathname: '/resultado/[id]', params: { id: item.id } })}
+            onApagar={() => confirmarExclusao(item)}
+          />
+        )}
+      />
 
       <View style={styles.acoes}>
-        {lendo ? (
-          <Botao rotulo="Parar" variante="secundario" onPress={parar} />
-        ) : (
-          <Botao rotulo="Iniciar leitura" onPress={iniciar} />
-        )}
-        <Botao rotulo="Zerar" variante="secundario" onPress={zerar} />
+        <Pressable
+          onPress={() => router.push('/calibrar')}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.botao, pressed && styles.botaoPressionado]}
+        >
+          <Text style={styles.botaoTexto}>Nova varredura</Text>
+        </Pressable>
       </View>
     </SafeAreaView>
   );
+}
+
+function ItemSessao({
+  sessao,
+  onAbrir,
+  onApagar,
+}: {
+  sessao: Session;
+  onAbrir: () => void;
+  onApagar: () => void;
+}) {
+  const { stats } = sessao;
+
+  return (
+    <Pressable
+      onPress={onAbrir}
+      accessibilityRole="button"
+      style={({ pressed }) => [styles.item, pressed && styles.itemPressionado]}
+    >
+      <View style={styles.itemTopo}>
+        <Text style={styles.itemNome} numberOfLines={1}>
+          {sessao.name}
+        </Text>
+        <Pressable
+          onPress={onApagar}
+          accessibilityRole="button"
+          accessibilityLabel={`Apagar ${sessao.name}`}
+          hitSlop={12}
+        >
+          <Text style={styles.apagar}>apagar</Text>
+        </Pressable>
+      </View>
+
+      <Text style={styles.itemMeta}>
+        {formatarData(sessao.startedAt)} · {formatar(stats.totalDistance, 1)} m ·{' '}
+        {stats.totalSteps} passos
+      </Text>
+
+      <View style={styles.proporcao}>
+        <Fatia fracao={stats.pctSafe} nivel="safe" />
+        <Fatia fracao={stats.pctWarning} nivel="warning" />
+        <Fatia fracao={stats.pctCritical} nivel="critical" />
+      </View>
+    </Pressable>
+  );
+}
+
+function Fatia({ fracao, nivel }: { fracao: number; nivel: RiskLevel }) {
+  if (fracao <= 0) return null;
+  return <View style={{ flex: fracao, backgroundColor: COLORS[nivel] }} />;
 }
 
 // Vírgula decimal, como se escreve em português
@@ -113,49 +131,11 @@ function formatar(valor: number, casas: number): string {
   return valor.toFixed(casas).replace('.', ',');
 }
 
-function Medida({ valor, unidade }: { valor: string; unidade: string }) {
-  return (
-    <View style={styles.medida}>
-      <Text style={styles.numero}>{valor}</Text>
-      <Text style={styles.unidade}>{unidade}</Text>
-    </View>
-  );
-}
-
-function Linha({ rotulo, valor }: { rotulo: string; valor: string }) {
-  return (
-    <View style={styles.linha}>
-      <Text style={styles.linhaRotulo}>{rotulo}</Text>
-      <Text style={styles.linhaValor}>{valor}</Text>
-    </View>
-  );
-}
-
-function Botao({
-  rotulo,
-  onPress,
-  variante = 'primario',
-}: {
-  rotulo: string;
-  onPress: () => void;
-  variante?: 'primario' | 'secundario';
-}) {
-  const primario = variante === 'primario';
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      style={({ pressed }) => [
-        styles.botao,
-        primario ? styles.botaoPrimario : styles.botaoSecundario,
-        pressed && styles.botaoPressionado,
-      ]}
-    >
-      <Text style={[styles.botaoTexto, primario ? styles.botaoTextoPrimario : undefined]}>
-        {rotulo}
-      </Text>
-    </Pressable>
-  );
+function formatarData(epochMs: number): string {
+  const data = new Date(epochMs);
+  const dia = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  return `${dia} ${hora}`;
 }
 
 const styles = StyleSheet.create({
@@ -181,109 +161,90 @@ const styles = StyleSheet.create({
     letterSpacing: 2.5,
     color: THEME.muted,
   },
-  espacador: {
-    flex: 1,
-  },
-  atalho: {
-    fontFamily: FONTS.sansMedium,
-    fontSize: 14,
-    color: THEME.accent,
-  },
-  conteudo: {
-    paddingTop: 28,
+  lista: {
+    paddingTop: 24,
     paddingBottom: 24,
-    gap: 32,
+    gap: 12,
   },
-  bloco: {
-    gap: 14,
-  },
-  secao: {
-    fontFamily: FONTS.monoMedium,
-    fontSize: 11,
-    letterSpacing: 2.75,
-    color: THEME.accent,
-  },
-  medida: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 8,
-  },
-  numero: {
+  titulo: {
     fontFamily: FONTS.sansSemiBold,
-    fontSize: 60,
-    letterSpacing: -1.5,
+    fontSize: 30,
+    letterSpacing: -0.8,
+    color: THEME.fg,
+    paddingBottom: 12,
+  },
+  vazio: {
+    gap: 8,
+    paddingTop: 8,
+  },
+  vazioTitulo: {
+    fontFamily: FONTS.sansMedium,
+    fontSize: 17,
     color: THEME.fg,
   },
-  unidade: {
+  vazioTexto: {
     fontFamily: FONTS.sans,
-    fontSize: 18,
+    fontSize: 15,
+    lineHeight: 23,
     color: THEME.muted,
   },
-  cartao: {
+  item: {
     backgroundColor: THEME.surface,
     borderColor: THEME.border,
     borderWidth: 1,
     borderRadius: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 4,
+    padding: 16,
+    gap: 10,
   },
-  linha: {
+  itemPressionado: {
+    opacity: 0.7,
+  },
+  itemTopo: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 9,
+    justifyContent: 'space-between',
+    gap: 12,
   },
-  linhaRotulo: {
+  itemNome: {
+    flex: 1,
+    fontFamily: FONTS.sansMedium,
+    fontSize: 17,
+    color: THEME.fg,
+  },
+  apagar: {
     fontFamily: FONTS.mono,
-    fontSize: 13,
+    fontSize: 12,
     color: THEME.muted,
   },
-  linhaValor: {
-    fontFamily: FONTS.monoMedium,
-    fontSize: 14,
-    color: THEME.fg,
-  },
-  dica: {
-    fontFamily: FONTS.sans,
-    fontSize: 14,
-    lineHeight: 21,
+  itemMeta: {
+    fontFamily: FONTS.mono,
+    fontSize: 12,
     color: THEME.muted,
   },
-  indisponivel: {
-    fontFamily: FONTS.sans,
-    fontSize: 16,
-    lineHeight: 24,
-    color: THEME.fg,
+  proporcao: {
+    flexDirection: 'row',
+    height: 6,
+    borderRadius: 999,
+    overflow: 'hidden',
+    backgroundColor: THEME.bg,
   },
   acoes: {
-    flexDirection: 'row',
-    gap: 12,
     paddingTop: 12,
     paddingBottom: 20,
   },
   botao: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 999,
-    paddingVertical: 14,
-  },
-  botaoPrimario: {
     backgroundColor: THEME.accent,
-  },
-  botaoSecundario: {
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    paddingVertical: 15,
   },
   botaoPressionado: {
     opacity: 0.8,
   },
   botaoTexto: {
     fontFamily: FONTS.sansMedium,
-    fontSize: 15,
-    color: THEME.fg,
-  },
-  botaoTextoPrimario: {
+    fontSize: 16,
     color: THEME.bg,
   },
 });

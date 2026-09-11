@@ -8,11 +8,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { RiskStrip } from '../src/components/RiskStrip';
 import { COLORS, FONTS, TEXT_ON_RISK, THEME } from '../src/core/constants';
 import { classify, deviation } from '../src/core/magnetics';
-import { guardarSessao } from '../src/core/sessionHandoff';
 import { computeStats } from '../src/core/stats';
 import type { Reading, RiskLevel } from '../src/core/types';
 import { useMagnetometer } from '../src/hooks/useMagnetometer';
 import { usePedometer } from '../src/hooks/usePedometer';
+import { useSessions } from '../src/hooks/useSessions';
 
 export default function Varredura() {
   useKeepAwake(); // a tela não pode apagar no meio da varredura
@@ -27,8 +27,10 @@ export default function Varredura() {
   const mag = useMagnetometer();
   const passos = usePedometer(parametrosValidos ? passada : 0);
 
+  const { save } = useSessions();
   const [readings, setReadings] = useState<Reading[]>([]);
   const [capturando, setCapturando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
 
   const inicioRef = useRef(Date.now());
   const nivelAnteriorRef = useRef<RiskLevel | null>(null);
@@ -81,13 +83,16 @@ export default function Varredura() {
     }
   }, [ultima]);
 
-  const finalizar = () => {
+  const finalizar = async () => {
+    if (salvando) return;
+    setSalvando(true);
     setCapturando(false);
     mag.stop();
     passos.stop();
 
     const id = String(inicioRef.current);
-    guardarSessao({
+    // Grava antes de navegar: o resultado lê do armazenamento, não da memória
+    await save({
       id,
       name: nome,
       startedAt: inicioRef.current,
@@ -154,8 +159,13 @@ export default function Varredura() {
 
       <View style={styles.rodape}>
         <RiskStrip levels={readings.map((r) => r.level)} />
-        <Pressable onPress={finalizar} accessibilityRole="button" style={styles.finalizar}>
-          <Text style={styles.finalizarTexto}>Finalizar</Text>
+        <Pressable
+          onPress={() => void finalizar()}
+          disabled={salvando}
+          accessibilityRole="button"
+          style={styles.finalizar}
+        >
+          <Text style={styles.finalizarTexto}>{salvando ? 'Salvando...' : 'Finalizar'}</Text>
         </Pressable>
       </View>
     </SafeAreaView>
