@@ -1,6 +1,5 @@
 import * as Haptics from 'expo-haptics';
 import { useKeepAwake } from 'expo-keep-awake';
-import type { Href } from 'expo-router';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -98,8 +97,7 @@ export default function Varredura() {
       readings,
       stats: computeStats(readings),
     });
-    // A rota /resultado/[id] nasce na T7. O cast sai quando o arquivo existir.
-    router.replace(`/resultado/${id}` as Href);
+    router.replace({ pathname: '/resultado/[id]', params: { id } });
   };
 
   if (!parametrosValidos) {

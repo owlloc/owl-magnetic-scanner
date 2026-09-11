@@ -1,4 +1,11 @@
-import { STRIP_SEGMENTS } from './constants';
+import {
+  ANOMALY_COUNT,
+  ANOMALY_MIN_SEPARATION,
+  HIGH_DENSITY_PCT,
+  MODERATE_CRITICAL_PCT,
+  MODERATE_WARNING_PCT,
+  STRIP_SEGMENTS,
+} from './constants';
 import type { Reading, RiskLevel, SessionStats } from './types';
 
 const EMPTY_STATS: SessionStats = {
@@ -46,6 +53,42 @@ export function computeStats(readings: Reading[]): SessionStats {
     pctWarning: warning / totalLeituras,
     pctCritical: critical / totalLeituras,
   };
+}
+
+// As maiores anomalias do percurso, uma por zona. Leituras vizinhas da
+// mesma anomalia são descartadas: sem isso as três maiores seriam três
+// leituras do mesmo instante, no mesmo ponto do galpão. Leituras limpas
+// nunca entram, para a tela não inventar anomalia onde não houve.
+export function topAnomalies(
+  readings: Reading[],
+  count: number = ANOMALY_COUNT,
+  minSeparation: number = ANOMALY_MIN_SEPARATION
+): Reading[] {
+  const candidatas = readings
+    .filter((r) => r.level !== 'safe')
+    .sort((a, b) => b.deviationPct - a.deviationPct);
+
+  const escolhidas: Reading[] = [];
+  for (const leitura of candidatas) {
+    if (escolhidas.length >= count) break;
+    const distante = escolhidas.every(
+      (e) => Math.abs(e.index - leitura.index) >= minSeparation
+    );
+    if (distante) escolhidas.push(leitura);
+  }
+  return escolhidas;
+}
+
+// Recomendação de posicionamento de âncoras a partir da proporção do
+// percurso em cada faixa de risco.
+export function recommendation(stats: SessionStats): string {
+  if (stats.pctCritical > HIGH_DENSITY_PCT) {
+    return 'Ambiente com alta densidade metálica. Recomenda-se aumentar a densidade de âncoras ou reposicioná-las fora das zonas críticas.';
+  }
+  if (stats.pctCritical > MODERATE_CRITICAL_PCT || stats.pctWarning > MODERATE_WARNING_PCT) {
+    return 'Distorção concentrada em trechos do percurso. Posicione as âncoras nas faixas verdes e evite as zonas vermelhas marcadas acima.';
+  }
+  return 'Percurso majoritariamente limpo. Não há indício de concentração metálica que comprometa o posicionamento das âncoras neste trajeto.';
 }
 
 const SEVERIDADE: Record<RiskLevel, number> = { safe: 0, warning: 1, critical: 2 };

@@ -26,6 +26,17 @@ export const COLORS: Record<RiskLevel, string> = {
 // em vez de uma por leitura.
 export const STRIP_SEGMENTS = 120;
 
+// Quantas anomalias a tela de resultado lista, e a distância mínima entre
+// elas em leituras (a 10 Hz, 30 leituras são 3 s de caminhada). Sem essa
+// separação, as três maiores seriam três leituras do mesmo ponto.
+export const ANOMALY_COUNT = 3;
+export const ANOMALY_MIN_SEPARATION = 30;
+
+// Limiares da recomendação textual, em fração do percurso
+export const HIGH_DENSITY_PCT = 0.3;
+export const MODERATE_CRITICAL_PCT = 0.1;
+export const MODERATE_WARNING_PCT = 0.4;
+
 // Texto legível sobre cada cor de risco usada como fundo de tela
 export const TEXT_ON_RISK: Record<RiskLevel, string> = {
   safe: '#ffffff',
