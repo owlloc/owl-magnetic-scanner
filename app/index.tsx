@@ -1,13 +1,33 @@
-// Tela de teste da T3: valida o magnetômetro ao vivo no aparelho.
-// É temporária — a Home definitiva (lista de sessões) chega na T8.
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+// Tela de teste das T3 e T4: valida magnetômetro e pedômetro ao vivo no
+// aparelho. É temporária — a Home definitiva (lista de sessões) chega na T8.
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { FONTS, THEME } from '../src/core/constants';
+import { DEFAULT_STRIDE_M, FONTS, THEME } from '../src/core/constants';
 import { useMagnetometer } from '../src/hooks/useMagnetometer';
+import { usePedometer } from '../src/hooks/usePedometer';
+
+// Passada fixa por enquanto; a tela de calibração (T5) é que vai deixar editar.
+const PASSADA_TESTE = DEFAULT_STRIDE_M;
 
 export default function Home() {
   const mag = useMagnetometer();
+  const passos = usePedometer(PASSADA_TESTE);
+
+  const lendo = mag.isRunning || passos.isRunning;
+
+  const iniciar = () => {
+    mag.start();
+    passos.start();
+  };
+  const parar = () => {
+    mag.stop();
+    passos.stop();
+  };
+  const zerar = () => {
+    mag.reset();
+    passos.reset();
+  };
 
   return (
     <SafeAreaView style={styles.tela}>
@@ -21,47 +41,79 @@ export default function Home() {
         <Text style={styles.etiqueta}>MAGSCAN</Text>
       </View>
 
-      <View style={styles.corpo}>
-        <Text style={styles.secao}>TESTE DO MAGNETÔMETRO</Text>
-
-        {mag.isAvailable === false ? (
-          <Text style={styles.indisponivel}>
-            Este aparelho não tem magnetômetro. O app não consegue medir campo magnético aqui.
-          </Text>
-        ) : (
-          <>
-            <View style={styles.leitura}>
-              <Text style={styles.numero}>
-                {mag.smoothed === null ? '--' : mag.smoothed.toFixed(1)}
-              </Text>
-              <Text style={styles.unidade}>µT</Text>
-            </View>
-
-            <View style={styles.cartao}>
-              <Linha rotulo="x" valor={mag.raw === null ? '--' : mag.raw.x.toFixed(2)} />
-              <Linha rotulo="y" valor={mag.raw === null ? '--' : mag.raw.y.toFixed(2)} />
-              <Linha rotulo="z" valor={mag.raw === null ? '--' : mag.raw.z.toFixed(2)} />
-              <Linha rotulo="amostras" valor={String(mag.samples.length)} />
-              <Linha rotulo="estado" valor={mag.isRunning ? 'lendo' : 'parado'} />
-            </View>
-
-            <Text style={styles.dica}>
-              Encoste o aparelho numa tesoura, numa maçaneta ou na lateral de um armário de aço e
-              anote os valores.
+      <ScrollView
+        contentContainerStyle={styles.conteudo}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.bloco}>
+          <Text style={styles.secao}>MAGNETÔMETRO</Text>
+          {mag.isAvailable === false ? (
+            <Text style={styles.indisponivel}>
+              Este aparelho não tem magnetômetro. O app não consegue medir campo magnético aqui.
             </Text>
-          </>
-        )}
-      </View>
+          ) : (
+            <>
+              <Medida
+                valor={mag.smoothed === null ? '--' : formatar(mag.smoothed, 1)}
+                unidade="µT"
+              />
+              <View style={styles.cartao}>
+                <Linha rotulo="x" valor={mag.raw === null ? '--' : formatar(mag.raw.x, 2)} />
+                <Linha rotulo="y" valor={mag.raw === null ? '--' : formatar(mag.raw.y, 2)} />
+                <Linha rotulo="z" valor={mag.raw === null ? '--' : formatar(mag.raw.z, 2)} />
+                <Linha rotulo="amostras" valor={String(mag.samples.length)} />
+              </View>
+            </>
+          )}
+        </View>
+
+        <View style={styles.bloco}>
+          <Text style={styles.secao}>PEDÔMETRO</Text>
+          {passos.isAvailable === false ? (
+            <Text style={styles.indisponivel}>
+              Este aparelho não tem acelerômetro. Não dá para contar passos aqui.
+            </Text>
+          ) : (
+            <>
+              <Medida valor={String(passos.steps)} unidade="passos" />
+              <View style={styles.cartao}>
+                <Linha rotulo="distância" valor={`${formatar(passos.distance, 2)} m`} />
+                <Linha rotulo="passada" valor={`${formatar(PASSADA_TESTE, 2)} m`} />
+                <Linha rotulo="estado" valor={lendo ? 'lendo' : 'parado'} />
+              </View>
+            </>
+          )}
+        </View>
+
+        <Text style={styles.dica}>
+          Encoste o aparelho numa tesoura, numa maçaneta ou na lateral de um armário de aço e anote
+          os valores em µT. Depois ande 20 passos contando de cabeça e confira o contador.
+        </Text>
+      </ScrollView>
 
       <View style={styles.acoes}>
-        {mag.isRunning ? (
-          <Botao rotulo="Parar" variante="secundario" onPress={mag.stop} />
+        {lendo ? (
+          <Botao rotulo="Parar" variante="secundario" onPress={parar} />
         ) : (
-          <Botao rotulo="Iniciar leitura" onPress={mag.start} />
+          <Botao rotulo="Iniciar leitura" onPress={iniciar} />
         )}
-        <Botao rotulo="Zerar" variante="secundario" onPress={mag.reset} />
+        <Botao rotulo="Zerar" variante="secundario" onPress={zerar} />
       </View>
     </SafeAreaView>
+  );
+}
+
+// Vírgula decimal, como se escreve em português
+function formatar(valor: number, casas: number): string {
+  return valor.toFixed(casas).replace('.', ',');
+}
+
+function Medida({ valor, unidade }: { valor: string; unidade: string }) {
+  return (
+    <View style={styles.medida}>
+      <Text style={styles.numero}>{valor}</Text>
+      <Text style={styles.unidade}>{unidade}</Text>
+    </View>
   );
 }
 
@@ -124,10 +176,13 @@ const styles = StyleSheet.create({
     letterSpacing: 2.5,
     color: THEME.muted,
   },
-  corpo: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: 24,
+  conteudo: {
+    paddingTop: 28,
+    paddingBottom: 24,
+    gap: 32,
+  },
+  bloco: {
+    gap: 14,
   },
   secao: {
     fontFamily: FONTS.monoMedium,
@@ -135,20 +190,20 @@ const styles = StyleSheet.create({
     letterSpacing: 2.75,
     color: THEME.accent,
   },
-  leitura: {
+  medida: {
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: 8,
   },
   numero: {
     fontFamily: FONTS.sansSemiBold,
-    fontSize: 76,
-    letterSpacing: -2,
+    fontSize: 60,
+    letterSpacing: -1.5,
     color: THEME.fg,
   },
   unidade: {
     fontFamily: FONTS.sans,
-    fontSize: 20,
+    fontSize: 18,
     color: THEME.muted,
   },
   cartao: {
@@ -157,13 +212,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 16,
     paddingHorizontal: 18,
-    paddingVertical: 6,
+    paddingVertical: 4,
   },
   linha: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 9,
   },
   linhaRotulo: {
     fontFamily: FONTS.mono,
@@ -190,6 +245,7 @@ const styles = StyleSheet.create({
   acoes: {
     flexDirection: 'row',
     gap: 12,
+    paddingTop: 12,
     paddingBottom: 20,
   },
   botao: {
