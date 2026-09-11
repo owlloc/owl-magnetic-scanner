@@ -3,48 +3,50 @@
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { DEFAULT_STRIDE_M, FONTS, STEP_THRESHOLD, THEME } from '../src/core/constants';
+import {
+  DEFAULT_STRIDE_M,
+  FONTS,
+  STEP_REFRACTORY_MS,
+  STEP_THRESHOLD,
+  THEME,
+} from '../src/core/constants';
 import { useMagnetometer } from '../src/hooks/useMagnetometer';
 import { usePedometer } from '../src/hooks/usePedometer';
 
 // Passada fixa por enquanto; a tela de calibração (T5) é que vai deixar editar.
 const PASSADA_TESTE = DEFAULT_STRIDE_M;
 
-// Limiares candidatos para aferir a detecção em campo. Sai junto com esta
+// Refratários candidatos, já no limiar aferido em campo. Sai junto com esta
 // tela de teste, assim que o valor definitivo estiver escolhido.
-const SONDAS = [1.12, 1.08, 1.04] as const;
+const SONDAS_MS = [350, 450] as const;
 
 export default function Home() {
   const mag = useMagnetometer();
   const passos = usePedometer(PASSADA_TESTE);
 
-  // Mesmo sinal do acelerômetro contado com limiares mais baixos, lado a lado
-  const sonda112 = usePedometer(PASSADA_TESTE, SONDAS[0]);
-  const sonda108 = usePedometer(PASSADA_TESTE, SONDAS[1]);
-  const sonda104 = usePedometer(PASSADA_TESTE, SONDAS[2]);
+  // Mesmo sinal do acelerômetro com refratários mais longos, lado a lado
+  const sonda350 = usePedometer(PASSADA_TESTE, STEP_THRESHOLD, SONDAS_MS[0]);
+  const sonda450 = usePedometer(PASSADA_TESTE, STEP_THRESHOLD, SONDAS_MS[1]);
 
   const lendo = mag.isRunning || passos.isRunning;
 
   const iniciar = () => {
     mag.start();
     passos.start();
-    sonda112.start();
-    sonda108.start();
-    sonda104.start();
+    sonda350.start();
+    sonda450.start();
   };
   const parar = () => {
     mag.stop();
     passos.stop();
-    sonda112.stop();
-    sonda108.stop();
-    sonda104.stop();
+    sonda350.stop();
+    sonda450.stop();
   };
   const zerar = () => {
     mag.reset();
     passos.reset();
-    sonda112.reset();
-    sonda108.reset();
-    sonda104.reset();
+    sonda350.reset();
+    sonda450.reset();
   };
 
   return (
@@ -104,19 +106,15 @@ export default function Home() {
         </View>
 
         <View style={styles.bloco}>
-          <Text style={styles.secao}>AFERIÇÃO DO LIMIAR</Text>
+          <Text style={styles.secao}>AFERIÇÃO DO REFRATÁRIO</Text>
           <View style={styles.cartao}>
-            <Linha
-              rotulo={`${formatar(STEP_THRESHOLD, 2)} g (atual)`}
-              valor={String(passos.steps)}
-            />
-            <Linha rotulo={`${formatar(SONDAS[0], 2)} g`} valor={String(sonda112.steps)} />
-            <Linha rotulo={`${formatar(SONDAS[1], 2)} g`} valor={String(sonda108.steps)} />
-            <Linha rotulo={`${formatar(SONDAS[2], 2)} g`} valor={String(sonda104.steps)} />
+            <Linha rotulo={`${STEP_REFRACTORY_MS} ms (atual)`} valor={String(passos.steps)} />
+            <Linha rotulo={`${SONDAS_MS[0]} ms`} valor={String(sonda350.steps)} />
+            <Linha rotulo={`${SONDAS_MS[1]} ms`} valor={String(sonda450.steps)} />
           </View>
           <Text style={styles.dica}>
-            Ande 20 passos devagar e 20 na velocidade normal. O limiar certo é o menor que acerta os
-            dois. Este bloco é temporário e sai quando o valor estiver escolhido.
+            Limiar já fixado em {formatar(STEP_THRESHOLD, 2)} g. Ande 20 passos devagar e 20 na
+            velocidade normal. O refratário certo é o que acerta os dois. Este bloco é temporário.
           </Text>
         </View>
 

@@ -6,9 +6,12 @@ export type StepDetector = {
   push(a: number, t: number): boolean;
 };
 
-// O limiar é injetável só para permitir aferi-lo em campo comparando
-// contagens lado a lado. Sem argumento, vale o STEP_THRESHOLD do spec.
-export function createStepDetector(threshold: number = STEP_THRESHOLD): StepDetector {
+// Limiar e refratário são injetáveis só para permitir aferi-los em campo
+// comparando contagens lado a lado. Sem argumento, valem as constantes.
+export function createStepDetector(
+  threshold: number = STEP_THRESHOLD,
+  refractoryMs: number = STEP_REFRACTORY_MS
+): StepDetector {
   let above = false;
   let lastStepAt = Number.NEGATIVE_INFINITY;
 
@@ -17,7 +20,7 @@ export function createStepDetector(threshold: number = STEP_THRESHOLD): StepDete
       const wasAbove = above;
       above = a >= threshold;
       // Conta só na borda de subida e fora do período refratário
-      if (above && !wasAbove && t - lastStepAt >= STEP_REFRACTORY_MS) {
+      if (above && !wasAbove && t - lastStepAt >= refractoryMs) {
         lastStepAt = t;
         return true;
       }

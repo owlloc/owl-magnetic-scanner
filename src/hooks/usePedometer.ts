@@ -1,7 +1,7 @@
 import { Accelerometer } from 'expo-sensors';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { ACC_UPDATE_MS, STEP_THRESHOLD } from '../core/constants';
+import { ACC_UPDATE_MS, STEP_REFRACTORY_MS, STEP_THRESHOLD } from '../core/constants';
 import { magnitude } from '../core/magnetics';
 import { createStepDetector } from '../core/steps';
 
@@ -17,7 +17,8 @@ export type UsePedometer = {
 
 export function usePedometer(
   strideLength: number,
-  threshold: number = STEP_THRESHOLD
+  threshold: number = STEP_THRESHOLD,
+  refractoryMs: number = STEP_REFRACTORY_MS
 ): UsePedometer {
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -26,7 +27,7 @@ export function usePedometer(
   // O detector guarda o estado do cruzamento e do refratário entre as
   // amostras, então precisa sobreviver aos re-renders. O limiar é lido na
   // montagem e a cada reset.
-  const detectorRef = useRef(createStepDetector(threshold));
+  const detectorRef = useRef(createStepDetector(threshold, refractoryMs));
 
   useEffect(() => {
     let montado = true;
@@ -60,9 +61,9 @@ export function usePedometer(
   const start = useCallback(() => setIsRunning(true), []);
   const stop = useCallback(() => setIsRunning(false), []);
   const reset = useCallback(() => {
-    detectorRef.current = createStepDetector(threshold);
+    detectorRef.current = createStepDetector(threshold, refractoryMs);
     setSteps(0);
-  }, [threshold]);
+  }, [threshold, refractoryMs]);
 
   return {
     isAvailable,
