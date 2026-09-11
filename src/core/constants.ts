@@ -12,6 +12,10 @@ export const CRITICAL_THRESHOLD = 0.4;
 export const STEP_THRESHOLD = 1.08; // em g, módulo da aceleração
 export const STEP_REFRACTORY_MS = 280; // evita contagem dupla no mesmo impacto
 export const DEFAULT_STRIDE_M = 0.7;
+// Faixa plausível do campo terrestre medido por celular. Fora disso, ou há
+// metal perto ou o magnetômetro está descalibrado.
+export const BASELINE_MIN_UT = 20;
+export const BASELINE_MAX_UT = 70;
 export const COLORS: Record<RiskLevel, string> = {
   safe: '#16a34a',
   warning: '#eab308',

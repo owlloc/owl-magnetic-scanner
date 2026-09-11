@@ -1,52 +1,33 @@
 // Tela de teste das T3 e T4: valida magnetômetro e pedômetro ao vivo no
 // aparelho. É temporária — a Home definitiva (lista de sessões) chega na T8.
+import { router } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import {
-  DEFAULT_STRIDE_M,
-  FONTS,
-  STEP_REFRACTORY_MS,
-  STEP_THRESHOLD,
-  THEME,
-} from '../src/core/constants';
+import { DEFAULT_STRIDE_M, FONTS, THEME } from '../src/core/constants';
 import { useMagnetometer } from '../src/hooks/useMagnetometer';
 import { usePedometer } from '../src/hooks/usePedometer';
 
-// Passada fixa por enquanto; a tela de calibração (T5) é que vai deixar editar.
+// Passada fixa nesta tela de teste; quem edita de verdade é a calibração.
 const PASSADA_TESTE = DEFAULT_STRIDE_M;
-
-// Refratários candidatos, já no limiar aferido em campo. Sai junto com esta
-// tela de teste, assim que o valor definitivo estiver escolhido.
-const SONDAS_MS = [350, 450] as const;
 
 export default function Home() {
   const mag = useMagnetometer();
   const passos = usePedometer(PASSADA_TESTE);
-
-  // Mesmo sinal do acelerômetro com refratários mais longos, lado a lado
-  const sonda350 = usePedometer(PASSADA_TESTE, STEP_THRESHOLD, SONDAS_MS[0]);
-  const sonda450 = usePedometer(PASSADA_TESTE, STEP_THRESHOLD, SONDAS_MS[1]);
 
   const lendo = mag.isRunning || passos.isRunning;
 
   const iniciar = () => {
     mag.start();
     passos.start();
-    sonda350.start();
-    sonda450.start();
   };
   const parar = () => {
     mag.stop();
     passos.stop();
-    sonda350.stop();
-    sonda450.stop();
   };
   const zerar = () => {
     mag.reset();
     passos.reset();
-    sonda350.reset();
-    sonda450.reset();
   };
 
   return (
@@ -59,6 +40,10 @@ export default function Home() {
           accessibilityLabel="OWL"
         />
         <Text style={styles.etiqueta}>MAGSCAN</Text>
+        <View style={styles.espacador} />
+        <Pressable onPress={() => router.push('/calibrar')} accessibilityRole="link">
+          <Text style={styles.atalho}>Calibrar →</Text>
+        </Pressable>
       </View>
 
       <ScrollView
@@ -103,19 +88,6 @@ export default function Home() {
               </View>
             </>
           )}
-        </View>
-
-        <View style={styles.bloco}>
-          <Text style={styles.secao}>AFERIÇÃO DO REFRATÁRIO</Text>
-          <View style={styles.cartao}>
-            <Linha rotulo={`${STEP_REFRACTORY_MS} ms (atual)`} valor={String(passos.steps)} />
-            <Linha rotulo={`${SONDAS_MS[0]} ms`} valor={String(sonda350.steps)} />
-            <Linha rotulo={`${SONDAS_MS[1]} ms`} valor={String(sonda450.steps)} />
-          </View>
-          <Text style={styles.dica}>
-            Limiar já fixado em {formatar(STEP_THRESHOLD, 2)} g. Ande 20 passos devagar e 20 na
-            velocidade normal. O refratário certo é o que acerta os dois. Este bloco é temporário.
-          </Text>
         </View>
 
         <Text style={styles.dica}>
@@ -208,6 +180,14 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 2.5,
     color: THEME.muted,
+  },
+  espacador: {
+    flex: 1,
+  },
+  atalho: {
+    fontFamily: FONTS.sansMedium,
+    fontSize: 14,
+    color: THEME.accent,
   },
   conteudo: {
     paddingTop: 28,
