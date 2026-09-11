@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { COLORS } from '../core/constants';
+import { COLORS, SPACING } from '../core/constants';
 import { summarizeStrip } from '../core/stats';
 import type { RiskLevel } from '../core/types';
 
@@ -19,7 +19,7 @@ export function RiskStrip({ levels }: { levels: RiskLevel[] }) {
 const styles = StyleSheet.create({
   faixa: {
     flexDirection: 'row',
-    height: 44,
+    height: SPACING.xxl + 4,
     borderRadius: 10,
     overflow: 'hidden',
     backgroundColor: 'rgba(0,0,0,0.28)',

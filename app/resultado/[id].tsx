@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RiskStrip } from '../../src/components/RiskStrip';
 import { StatCard } from '../../src/components/StatCard';
-import { COLORS, FONTS, THEME } from '../../src/core/constants';
+import { COLORS, FONTS, SPACING, THEME, TYPE } from '../../src/core/constants';
 import { csvFileName, toCsv } from '../../src/core/csv';
 import { recommendation, topAnomalies } from '../../src/core/stats';
 import type { Reading, RiskLevel, Session } from '../../src/core/types';
@@ -232,41 +232,42 @@ const styles = StyleSheet.create({
   tela: {
     flex: 1,
     backgroundColor: THEME.bg,
-    paddingHorizontal: 24,
+    paddingHorizontal: SPACING.lg,
   },
   telaVazia: {
     justifyContent: 'center',
-    gap: 16,
+    gap: SPACING.md,
   },
   vazioTitulo: {
     fontFamily: FONTS.sansSemiBold,
-    fontSize: 24,
+    fontSize: TYPE.title,
+    letterSpacing: -0.8,
     color: THEME.fg,
   },
   vazioTexto: {
     fontFamily: FONTS.sans,
-    fontSize: 15,
-    lineHeight: 23,
+    fontSize: TYPE.body,
+    lineHeight: 24,
     color: THEME.muted,
   },
   botaoVazio: {
     alignSelf: 'flex-start',
     borderRadius: 999,
     backgroundColor: THEME.accent,
-    paddingHorizontal: 24,
-    paddingVertical: 13,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md + 3,
   },
   botaoVazioTexto: {
     fontFamily: FONTS.sansMedium,
-    fontSize: 15,
+    fontSize: TYPE.body,
     color: THEME.bg,
   },
   cabecalho: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingTop: 12,
-    paddingBottom: 4,
+    gap: SPACING.sm,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.xs,
   },
   wordmark: {
     width: 36,
@@ -274,7 +275,7 @@ const styles = StyleSheet.create({
   },
   etiqueta: {
     fontFamily: FONTS.monoMedium,
-    fontSize: 11,
+    fontSize: TYPE.label,
     letterSpacing: 2.5,
     color: THEME.muted,
   },
@@ -283,34 +284,34 @@ const styles = StyleSheet.create({
   },
   atalho: {
     fontFamily: FONTS.sansMedium,
-    fontSize: 14,
+    fontSize: TYPE.small,
     color: THEME.accent,
   },
   conteudo: {
-    paddingTop: 20,
-    paddingBottom: 28,
-    gap: 22,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.xl,
+    gap: SPACING.lg,
   },
   identificacao: {
-    gap: 5,
+    gap: SPACING.xs,
   },
   titulo: {
     fontFamily: FONTS.sansSemiBold,
-    fontSize: 26,
-    letterSpacing: -0.7,
+    fontSize: TYPE.title,
+    letterSpacing: -0.8,
     color: THEME.fg,
   },
   subtitulo: {
     fontFamily: FONTS.mono,
-    fontSize: 12,
+    fontSize: TYPE.label,
     color: THEME.muted,
   },
   bloco: {
-    gap: 10,
+    gap: SPACING.sm,
   },
   secao: {
     fontFamily: FONTS.monoMedium,
-    fontSize: 10,
+    fontSize: TYPE.label,
     letterSpacing: 2.2,
     color: THEME.accent,
   },
@@ -320,7 +321,7 @@ const styles = StyleSheet.create({
   },
   marca: {
     fontFamily: FONTS.mono,
-    fontSize: 11,
+    fontSize: TYPE.label,
     color: THEME.muted,
   },
   proporcao: {
@@ -333,12 +334,12 @@ const styles = StyleSheet.create({
   legenda: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 16,
+    gap: SPACING.md,
   },
   itemLegenda: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: SPACING.xs + 2,
   },
   pastilha: {
     width: 8,
@@ -347,35 +348,35 @@ const styles = StyleSheet.create({
   },
   legendaTexto: {
     fontFamily: FONTS.sans,
-    fontSize: 13,
+    fontSize: TYPE.small,
     color: THEME.muted,
   },
   grade: {
     flexDirection: 'row',
-    gap: 10,
+    gap: SPACING.sm,
   },
   listaAnomalias: {
-    gap: 9,
+    gap: SPACING.sm,
   },
   anomalia: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 9,
+    gap: SPACING.sm,
   },
   anomaliaTexto: {
     fontFamily: FONTS.monoMedium,
-    fontSize: 13,
+    fontSize: TYPE.small,
     color: THEME.fg,
   },
   semAnomalia: {
     fontFamily: FONTS.sans,
-    fontSize: 14,
+    fontSize: TYPE.body,
     color: THEME.muted,
   },
   recomendacao: {
     fontFamily: FONTS.sans,
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: TYPE.body,
+    lineHeight: 24,
     color: THEME.fg,
   },
   exportar: {
@@ -384,15 +385,15 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
-    paddingVertical: 14,
-    marginTop: 2,
+    paddingVertical: SPACING.md + 3,
+    marginTop: SPACING.xs,
   },
   exportarPressionado: {
     opacity: 0.7,
   },
   exportarTexto: {
     fontFamily: FONTS.sansMedium,
-    fontSize: 15,
+    fontSize: TYPE.body,
     color: THEME.fg,
   },
 });

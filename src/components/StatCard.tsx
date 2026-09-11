@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { FONTS, THEME } from '../core/constants';
+import { FONTS, SPACING, THEME, TYPE } from '../core/constants';
 
 export function StatCard({
   rotulo,
@@ -29,13 +29,13 @@ const styles = StyleSheet.create({
     borderColor: THEME.border,
     borderWidth: 1,
     borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    gap: 6,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    gap: SPACING.xs,
   },
   rotulo: {
     fontFamily: FONTS.mono,
-    fontSize: 9,
+    fontSize: TYPE.label - 2,
     letterSpacing: 1.4,
     color: THEME.muted,
   },
@@ -46,13 +46,13 @@ const styles = StyleSheet.create({
   },
   valor: {
     fontFamily: FONTS.sansSemiBold,
-    fontSize: 21,
+    fontSize: TYPE.subtitle,
     letterSpacing: -0.5,
     color: THEME.fg,
   },
   unidade: {
     fontFamily: FONTS.sans,
-    fontSize: 11,
+    fontSize: TYPE.label,
     color: THEME.muted,
   },
 });

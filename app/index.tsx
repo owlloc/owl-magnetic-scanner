@@ -3,12 +3,16 @@ import { useCallback } from 'react';
 import { Alert, FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { COLORS, FONTS, THEME } from '../src/core/constants';
+import { COLORS, FONTS, SPACING, THEME, TYPE } from '../src/core/constants';
 import type { RiskLevel, Session } from '../src/core/types';
+import { useMagnetometer } from '../src/hooks/useMagnetometer';
 import { useSessions } from '../src/hooks/useSessions';
 
 export default function Home() {
   const { sessions, isLoading, list, remove } = useSessions();
+  // Só a checagem de disponibilidade roda aqui; o sensor não é iniciado
+  const { isAvailable } = useMagnetometer();
+  const semSensor = isAvailable === false;
 
   // A lista precisa recarregar ao voltar do resultado, senão a varredura
   // recém-finalizada não aparece.
@@ -35,6 +39,10 @@ export default function Home() {
           accessibilityLabel="OWL"
         />
         <Text style={styles.etiqueta}>MAGSCAN</Text>
+        <View style={styles.espacador} />
+        <Pressable onPress={() => router.push('/sobre')} accessibilityRole="link">
+          <Text style={styles.atalho}>Sobre</Text>
+        </Pressable>
       </View>
 
       <FlatList
@@ -42,7 +50,20 @@ export default function Home() {
         keyExtractor={(s) => s.id}
         contentContainerStyle={styles.lista}
         showsVerticalScrollIndicator={false}
-        ListHeaderComponent={<Text style={styles.titulo}>Varreduras</Text>}
+        ListHeaderComponent={
+          <View style={styles.topo}>
+            <Text style={styles.titulo}>Varreduras</Text>
+            {semSensor && (
+              <View style={styles.aviso}>
+                <Text style={styles.avisoTitulo}>Sem magnetômetro</Text>
+                <Text style={styles.avisoTexto}>
+                  Este aparelho não tem magnetômetro, então não é possível medir campo magnético
+                  nem fazer uma varredura. As varreduras já salvas continuam abrindo normalmente.
+                </Text>
+              </View>
+            )}
+          </View>
+        }
         ListEmptyComponent={
           isLoading ? null : (
             <View style={styles.vazio}>
@@ -66,8 +87,14 @@ export default function Home() {
       <View style={styles.acoes}>
         <Pressable
           onPress={() => router.push('/calibrar')}
+          disabled={semSensor}
           accessibilityRole="button"
-          style={({ pressed }) => [styles.botao, pressed && styles.botaoPressionado]}
+          accessibilityState={{ disabled: semSensor }}
+          style={({ pressed }) => [
+            styles.botao,
+            pressed && styles.botaoPressionado,
+            semSensor && styles.botaoDesabilitado,
+          ]}
         >
           <Text style={styles.botaoTexto}>Nova varredura</Text>
         </Pressable>
@@ -142,14 +169,14 @@ const styles = StyleSheet.create({
   tela: {
     flex: 1,
     backgroundColor: THEME.bg,
-    paddingHorizontal: 24,
+    paddingHorizontal: SPACING.lg,
   },
   cabecalho: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingTop: 12,
-    paddingBottom: 4,
+    gap: SPACING.sm,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.xs,
   },
   wordmark: {
     width: 36,
@@ -157,35 +184,66 @@ const styles = StyleSheet.create({
   },
   etiqueta: {
     fontFamily: FONTS.monoMedium,
-    fontSize: 11,
+    fontSize: TYPE.label,
     letterSpacing: 2.5,
     color: THEME.muted,
   },
+  espacador: {
+    flex: 1,
+  },
+  atalho: {
+    fontFamily: FONTS.sansMedium,
+    fontSize: TYPE.small,
+    color: THEME.accent,
+  },
   lista: {
-    paddingTop: 24,
-    paddingBottom: 24,
-    gap: 12,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.lg,
+    gap: SPACING.md,
+  },
+  topo: {
+    gap: SPACING.md,
+    paddingBottom: SPACING.md,
   },
   titulo: {
     fontFamily: FONTS.sansSemiBold,
-    fontSize: 30,
+    fontSize: TYPE.title,
     letterSpacing: -0.8,
     color: THEME.fg,
-    paddingBottom: 12,
+  },
+  aviso: {
+    backgroundColor: THEME.surface,
+    borderColor: THEME.border,
+    borderLeftColor: COLORS.critical,
+    borderWidth: 1,
+    borderLeftWidth: 3,
+    borderRadius: 14,
+    padding: SPACING.md,
+    gap: SPACING.xs,
+  },
+  avisoTitulo: {
+    fontFamily: FONTS.sansMedium,
+    fontSize: TYPE.body,
+    color: THEME.fg,
+  },
+  avisoTexto: {
+    fontFamily: FONTS.sans,
+    fontSize: TYPE.small,
+    lineHeight: 21,
+    color: THEME.muted,
   },
   vazio: {
-    gap: 8,
-    paddingTop: 8,
+    gap: SPACING.sm,
   },
   vazioTitulo: {
     fontFamily: FONTS.sansMedium,
-    fontSize: 17,
+    fontSize: TYPE.subtitle,
     color: THEME.fg,
   },
   vazioTexto: {
     fontFamily: FONTS.sans,
-    fontSize: 15,
-    lineHeight: 23,
+    fontSize: TYPE.body,
+    lineHeight: 24,
     color: THEME.muted,
   },
   item: {
@@ -193,8 +251,8 @@ const styles = StyleSheet.create({
     borderColor: THEME.border,
     borderWidth: 1,
     borderRadius: 16,
-    padding: 16,
-    gap: 10,
+    padding: SPACING.md,
+    gap: SPACING.sm,
   },
   itemPressionado: {
     opacity: 0.7,
@@ -203,22 +261,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: SPACING.md,
   },
   itemNome: {
     flex: 1,
     fontFamily: FONTS.sansMedium,
-    fontSize: 17,
+    fontSize: TYPE.body,
     color: THEME.fg,
   },
   apagar: {
     fontFamily: FONTS.mono,
-    fontSize: 12,
+    fontSize: TYPE.label,
     color: THEME.muted,
   },
   itemMeta: {
     fontFamily: FONTS.mono,
-    fontSize: 12,
+    fontSize: TYPE.label,
     color: THEME.muted,
   },
   proporcao: {
@@ -229,22 +287,25 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.bg,
   },
   acoes: {
-    paddingTop: 12,
-    paddingBottom: 20,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.lg,
   },
   botao: {
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 999,
     backgroundColor: THEME.accent,
-    paddingVertical: 15,
+    paddingVertical: SPACING.md + 3,
   },
   botaoPressionado: {
     opacity: 0.8,
   },
+  botaoDesabilitado: {
+    opacity: 0.35,
+  },
   botaoTexto: {
     fontFamily: FONTS.sansMedium,
-    fontSize: 16,
+    fontSize: TYPE.body,
     color: THEME.bg,
   },
 });

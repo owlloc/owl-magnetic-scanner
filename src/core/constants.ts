@@ -56,6 +56,28 @@ export const THEME = {
   accent: '#5dbf4e',
 } as const;
 
+// Escala tipográfica fechada. Qualquer tamanho fora desta lista é um
+// desvio: o app inteiro se desenha com estes degraus.
+export const TYPE = {
+  display: 88, // leitura ao vivo da varredura
+  hero: 56, // baseline e demais números de destaque
+  title: 28,
+  subtitle: 20,
+  body: 15,
+  small: 13,
+  label: 11, // mono, maiúsculo, com letterSpacing
+} as const;
+
+// Espaçamento em múltiplos de 4, pelo mesmo motivo
+export const SPACING = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 20,
+  xl: 28,
+  xxl: 40,
+} as const;
+
 export const FONTS = {
   sans: 'Geist_400Regular',
   sansMedium: 'Geist_500Medium',

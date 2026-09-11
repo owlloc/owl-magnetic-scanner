@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { RiskStrip } from '../src/components/RiskStrip';
-import { COLORS, FONTS, TEXT_ON_RISK, THEME } from '../src/core/constants';
+import { COLORS, FONTS, SPACING, TEXT_ON_RISK, THEME, TYPE } from '../src/core/constants';
 import { classify, deviation } from '../src/core/magnetics';
 import { computeStats } from '../src/core/stats';
 import type { Reading, RiskLevel } from '../src/core/types';
@@ -195,117 +195,118 @@ function Contador({ rotulo, valor, cor }: { rotulo: string; valor: string; cor: 
 const styles = StyleSheet.create({
   tela: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: SPACING.lg,
   },
   telaErro: {
     backgroundColor: THEME.bg,
     justifyContent: 'center',
-    gap: 16,
+    gap: SPACING.md,
   },
   erroTitulo: {
     fontFamily: FONTS.sansSemiBold,
-    fontSize: 24,
+    fontSize: TYPE.title,
+    letterSpacing: -0.8,
     color: THEME.fg,
   },
   erroTexto: {
     fontFamily: FONTS.sans,
-    fontSize: 15,
-    lineHeight: 23,
+    fontSize: TYPE.body,
+    lineHeight: 24,
     color: THEME.muted,
   },
   botaoErro: {
     alignSelf: 'flex-start',
     borderRadius: 999,
     backgroundColor: THEME.accent,
-    paddingHorizontal: 24,
-    paddingVertical: 13,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md + 3,
   },
   botaoErroTexto: {
     fontFamily: FONTS.sansMedium,
-    fontSize: 15,
+    fontSize: TYPE.body,
     color: THEME.bg,
   },
   topo: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 16,
-    paddingTop: 12,
+    gap: SPACING.md,
+    paddingTop: SPACING.md,
   },
   local: {
     flex: 1,
     fontFamily: FONTS.sansMedium,
-    fontSize: 15,
+    fontSize: TYPE.body,
   },
   referencia: {
     fontFamily: FONTS.mono,
-    fontSize: 12,
+    fontSize: TYPE.label,
     opacity: 0.75,
   },
   centro: {
     flex: 1,
     justifyContent: 'center',
-    gap: 2,
+    gap: SPACING.xs,
   },
   medida: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 10,
+    gap: SPACING.sm,
   },
   numero: {
     fontFamily: FONTS.sansSemiBold,
-    fontSize: 92,
+    fontSize: TYPE.display,
     letterSpacing: -3,
   },
   unidade: {
     fontFamily: FONTS.sans,
-    fontSize: 24,
+    fontSize: TYPE.subtitle,
     opacity: 0.85,
   },
   desvio: {
     fontFamily: FONTS.sansMedium,
-    fontSize: 34,
+    fontSize: TYPE.title,
     letterSpacing: -1,
   },
   nivel: {
     fontFamily: FONTS.monoMedium,
-    fontSize: 12,
+    fontSize: TYPE.label,
     letterSpacing: 3,
-    paddingTop: 10,
+    paddingTop: SPACING.sm,
     opacity: 0.9,
   },
   contadores: {
     flexDirection: 'row',
-    gap: 28,
-    paddingBottom: 22,
+    gap: SPACING.xl,
+    paddingBottom: SPACING.lg,
   },
   contador: {
-    gap: 3,
+    gap: SPACING.xs,
   },
   contadorRotulo: {
     fontFamily: FONTS.mono,
-    fontSize: 10,
+    fontSize: TYPE.label,
     letterSpacing: 1.6,
     opacity: 0.75,
   },
   contadorValor: {
     fontFamily: FONTS.sansSemiBold,
-    fontSize: 20,
+    fontSize: TYPE.subtitle,
   },
   rodape: {
-    gap: 14,
-    paddingBottom: 20,
+    gap: SPACING.md,
+    paddingBottom: SPACING.lg,
   },
   finalizar: {
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 999,
     backgroundColor: THEME.bg,
-    paddingVertical: 15,
+    paddingVertical: SPACING.md + 3,
   },
   finalizarTexto: {
     fontFamily: FONTS.sansMedium,
-    fontSize: 16,
+    fontSize: TYPE.body,
     color: THEME.fg,
   },
 });
