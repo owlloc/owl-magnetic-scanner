@@ -14,3 +14,21 @@ export const COLORS: Record<RiskLevel, string> = {
   warning: '#eab308',
   critical: '#dc2626',
 };
+
+// Identidade visual da OWL, espelhada de owl-landing-page/src/app/globals.css
+export const THEME = {
+  bg: '#000000',
+  surface: '#0a0a0a',
+  border: '#1f1f1f',
+  fg: '#ffffff',
+  muted: '#71717a',
+  accent: '#5dbf4e',
+} as const;
+
+export const FONTS = {
+  sans: 'Geist_400Regular',
+  sansMedium: 'Geist_500Medium',
+  sansSemiBold: 'Geist_600SemiBold',
+  mono: 'GeistMono_400Regular',
+  monoMedium: 'GeistMono_500Medium',
+} as const;
